@@ -7,6 +7,7 @@ import { DataSource } from 'typeorm';
 import { UsersModule } from './user/users.module';
 import { AuthModule } from './auth/auth.module';
 import { User } from './user/entities/user.entity';
+import { NotExistsConstraint } from './inc/validators/not-exists.validator';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
@@ -21,7 +22,7 @@ import { User } from './user/entities/user.entity';
     synchronize: true
   }), KickModule, UsersModule, AuthModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, NotExistsConstraint],
 })
 export class AppModule {
   constructor(private dataSource: DataSource) { }

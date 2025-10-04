@@ -1,6 +1,5 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import type { Request, Response } from 'express';
 
 @Controller()
 export class AppController {
@@ -10,6 +9,6 @@ export class AppController {
   async getHello(): Promise<any> {
     const hello = this.appService.getHello();
 
-    return "Cat created";
+    return hello;
   }
 }
