@@ -11,12 +11,12 @@ import { NotExistsConstraint } from './common/validators/not-exists.validator';
 
 @Module({
   imports: [TypeOrmModule.forRoot({
-    type: 'mysql',
+    type: 'mariadb',
     host: 'localhost',
     port: 3306,
     username: 'root',
     password: 'root',
-    database: 'kickapi',
+    database: 'kick_api',
     entities: [User],
     autoLoadEntities: true,
     synchronize: true
