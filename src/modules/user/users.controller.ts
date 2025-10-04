@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dtos/create-user.dto';
+import { ApiCreatedResponse, ApiResponse } from '@nestjs/swagger';
 
 @Controller('users')
 export class UsersController {
@@ -13,6 +14,7 @@ export class UsersController {
     }
 
     @Post()
+    @ApiCreatedResponse({ description: 'The user has been successfully created.' })
     async store(@Body() createUserDto: CreateUserDto) {
         return await this.userService.create(createUserDto);
     }
