@@ -1,4 +1,6 @@
 import { Controller } from '@nestjs/common';
 
 @Controller('kick')
-export class KickController {}
+export class KickController {
+    
+}
