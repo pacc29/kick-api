@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { KickModule } from './kick/kick.module';
+import { KickModule } from './modules/kick/kick.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { UsersModule } from './user/users.module';
-import { AuthModule } from './auth/auth.module';
-import { User } from './user/entities/user.entity';
-import { NotExistsConstraint } from './inc/validators/not-exists.validator';
+import { UsersModule } from './modules/user/users.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { User } from './modules/user/entities/user.entity';
+import { NotExistsConstraint } from './common/validators/not-exists.validator';
 
 @Module({
   imports: [TypeOrmModule.forRoot({

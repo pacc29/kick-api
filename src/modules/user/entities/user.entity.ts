@@ -1,5 +1,6 @@
-import { BaseEntity } from "src/inc/entities/base.entity";
-import { hashPassword } from "src/inc/helpers/password";
+import { Exclude } from "class-transformer";
+import { BaseEntity } from "src/common/entities/base.entity";
+import { hashPassword } from "src/common/helpers/password";
 import { BeforeInsert, Column, Entity } from "typeorm";
 
 export enum UserProperties {
@@ -13,7 +14,8 @@ export class User extends BaseEntity {
     @Column({ nullable: false, length: 50 })
     email: string;
 
-    @Column({ nullable: false })
+    @Column({ nullable: false, select: false })
+    @Exclude()
     password: string
 
     @BeforeInsert()

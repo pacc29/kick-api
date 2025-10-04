@@ -1,6 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, MaxLength, MinLength } from "class-validator";
 import { User, UserProperties } from "../entities/user.entity";
-import { NotExists } from "src/inc/validators/not-exists.validator";
+import { NotExists } from "src/common/validators/not-exists.validator";
 
 export class CreateUserDto {
     @IsNotEmpty()

@@ -3,7 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dtos/create-user.dto';
-import { state } from 'src/inc/enums/state.enum';
+import { state } from 'src/common/enums/state.enum';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
@@ -18,7 +19,9 @@ export class UsersService {
     async create(createUserDto: CreateUserDto): Promise<User> {
         const newUser = this.usersRepository.create(createUserDto);
 
-        return await this.usersRepository.save(newUser);
+        const newUserSaved = await this.usersRepository.save(newUser);
+
+        return plainToInstance(User, newUserSaved);
     }
 
     async emailExists(email: string): Promise<boolean> {
