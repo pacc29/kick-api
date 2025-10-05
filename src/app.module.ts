@@ -14,12 +14,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './common/interfaces/environment.interface';
 
 @Module({
-  imports: [TypeOrmModule.forRootAsync(
-    {
-      imports: [ConfigModule.forRoot({ envFilePath: ['.env'], isGlobal: true })],
+  imports: [
+    TypeOrmModule.forRootAsync({
+      imports: [
+        ConfigModule.forRoot({ envFilePath: ['.env'], isGlobal: true }),
+      ],
       inject: [ConfigService],
       useFactory: (configService: ConfigService<EnvironmentVariables>) => ({
-        type: 'mysql',
+        type: 'mariadb',
         host: configService.getOrThrow('DB_HOST'),
         port: parseInt(configService.getOrThrow('DB_PORT')),
         username: configService.getOrThrow('DB_USER'),
@@ -29,17 +31,21 @@ import { EnvironmentVariables } from './common/interfaces/environment.interface'
         autoLoadEntities: true,
         synchronize: configService.getOrThrow('NODE_ENV') === 'development',
       }),
-    }
-  ), KickModule, UsersModule, AuthModule],
+    }),
+    KickModule,
+    UsersModule,
+    AuthModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,
     NotExistsConstraint,
     {
       provide: APP_INTERCEPTOR,
-      useClass: ResponseInterceptor
-    }],
+      useClass: ResponseInterceptor,
+    },
+  ],
 })
 export class AppModule {
-  constructor(private dataSource: DataSource) { }
+  constructor(private dataSource: DataSource) {}
 }
