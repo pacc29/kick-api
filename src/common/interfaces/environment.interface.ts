@@ -8,5 +8,8 @@ export interface EnvironmentVariables {
     DB_USER: string;
     DB_PASSWORD: string;
     DB_NAME: string;
+    CLIENT_ID: string;
+    CLIENT_SECRET: string;
+    GRANT_TYPE: string;
 }
 
