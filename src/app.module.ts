@@ -12,6 +12,8 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './common/interfaces/environment.interface';
+import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { Subscription } from './modules/subscription/entities/subscription.entity';
 
 @Module({
   imports: [
@@ -27,11 +29,12 @@ import { EnvironmentVariables } from './common/interfaces/environment.interface'
         username: configService.getOrThrow('DB_USER'),
         password: configService.getOrThrow('DB_PASSWORD'),
         database: configService.getOrThrow('DB_NAME'),
-        entities: [User],
+        entities: [User, Subscription],
         autoLoadEntities: true,
         synchronize: configService.getOrThrow('NODE_ENV') === 'development',
       }),
     }),
+    SubscriptionModule,
     KickModule,
     UsersModule,
     AuthModule,
