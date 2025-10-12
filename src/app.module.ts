@@ -14,6 +14,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './common/interfaces/environment.interface';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { Subscription } from './modules/subscription/entities/subscription.entity';
+import { BroadcastersModule } from './modules/broadcaster/broadcaster.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { Subscription } from './modules/subscription/entities/subscription.entit
         synchronize: configService.getOrThrow('NODE_ENV') === 'development',
       }),
     }),
+    BroadcastersModule,
     SubscriptionModule,
     KickModule,
     UsersModule,

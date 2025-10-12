@@ -5,5 +5,5 @@ export class CreateSubscriptionDto {
   user_id: number;
 
   @IsInt()
-  broadcaster_user_id: number;
+  broadcaster_id: number;
 }
