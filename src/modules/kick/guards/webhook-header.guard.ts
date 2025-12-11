@@ -24,7 +24,7 @@ export class WebhookHeaderGuard implements CanActivate {
     } = request.headers;
 
     if (!this.isValidEventType(eventType)) {
-      throw new BadRequestException('Invalid event Type');
+      throw new BadRequestException('Invalid event Type'); // or return false?
     }
 
     return true;
