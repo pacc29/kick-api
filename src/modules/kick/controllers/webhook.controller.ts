@@ -18,6 +18,7 @@ export class WebhookController extends KickController {
     @Body() body: any,
   ) {
     console.log(eventType);
+    console.log(body)
 
     return {
       hola: 'adioff',
