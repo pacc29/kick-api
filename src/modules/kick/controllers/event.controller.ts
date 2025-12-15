@@ -13,7 +13,6 @@ import { WebhookHeaderGuard } from '../events/guards/webhook-header.guard';
 import {
   GetSubscriptionsDto,
   SubscribeToEventBySlugDto,
-  SubscribeToEventDto,
 } from '../events/DTOs/subscriptions.dto';
 
 @Controller('kick/event')

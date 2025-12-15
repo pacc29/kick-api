@@ -164,7 +164,9 @@ export class KickService implements OnModuleInit {
   private async handleLiveStreamStatusUpdated(
     body: LiveStreamStatusUpdatedDto,
   ): Promise<string | void> {
-    if (!body.is_live && !body.ended_at) {
+    console.log('Live Stream Status Updated Event Body:', body);
+    
+    if (!body.is_live) {
       return; // No alert when user goes offline
     }
 
