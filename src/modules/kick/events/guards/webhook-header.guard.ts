@@ -23,6 +23,8 @@ export class WebhookHeaderGuard implements CanActivate {
       'kick-event-version': version,
     } = request.headers;
 
+    console.log('Headers received:', eventType);
+
     if (!this.isValidEventType(eventType)) {
       throw new BadRequestException('Invalid event Type'); // or return false?
     }
