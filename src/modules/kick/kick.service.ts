@@ -1,16 +1,22 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { EVENT_TYPE } from './webhook/headers/event-type.header';
-import { SuscribeDto } from './webhook/events/suscribe.dto';
+import { EVENT_TYPE } from './events/headers/event-type.header';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import qs from 'qs'; // Necesario para formatear el body
 import {
   AccessTokenResponse,
   ErrorResponse,
+  GetChannelInfoResponse,
   GetSubscriptionsResponse,
-  SubscribeResponse,
-} from './interfaces/responses.interface';
-import { GetSubscriptionsDto } from './webhook/events/getSubscriptions.dto';
+  SubscribeToEventResponse,
+} from './responses/responses.interface';
+import { EventBodyMap } from './events/maps/event.map';
+import { LiveStreamStatusUpdatedDto } from './events/payloads/livestream-status-updated.dto';
+import {
+  GetSubscriptionsDto,
+  SubscribeToEventDto,
+} from './events/DTOs/subscriptions.dto';
+import { ChannelInfoDto } from './channels/DTOs/channels.dto';
 
 @Injectable()
 export class KickService implements OnModuleInit {
@@ -22,12 +28,34 @@ export class KickService implements OnModuleInit {
     this.accessToken = await this.getAppAccessToken();
   }
 
-  async webhookDecider(eventType: EVENT_TYPE, body: any) {}
+  public async getChannelInfo(
+    channelInfoDto: ChannelInfoDto,
+  ): Promise<GetChannelInfoResponse | null> {
+    const response = await axios.get<GetChannelInfoResponse | ErrorResponse>(
+      `https://api.kick.com/public/v1/channels`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+        },
+        params: {
+          slug: channelInfoDto.slug,
+        },
+      },
+    );
 
-  async subscribe(suscribeDto: SuscribeDto): Promise<string | null> {
-    const response = await axios.post<SubscribeResponse | ErrorResponse>(
+    if (!response.data?.data) return null;
+
+    const data = response.data;
+
+    return data;
+  }
+
+  async subscribe(
+    subscribeToEventDto: SubscribeToEventDto,
+  ): Promise<string | null> {
+    const response = await axios.post<SubscribeToEventResponse | ErrorResponse>(
       'https://api.kick.com/public/v1/events/subscriptions',
-      suscribeDto,
+      subscribeToEventDto,
       {
         headers: {
           Authorization: `Bearer ${this.accessToken}`,
@@ -93,5 +121,37 @@ export class KickService implements OnModuleInit {
     }
 
     return data.access_token;
+  }
+
+  async handleWebhook(eventType: EVENT_TYPE, body: EventBodyMap[EVENT_TYPE]) {
+    console.log('Handling webhook event:', eventType);
+
+    switch (eventType) {
+      case EVENT_TYPE.LIVESTREAM_STATUS_STREAM_UPDATED:
+        return await this.handleLiveStreamStatusUpdated(
+          body as LiveStreamStatusUpdatedDto,
+        );
+    }
+  }
+
+  private async handleLiveStreamStatusUpdated(
+    body: LiveStreamStatusUpdatedDto,
+  ): Promise<string | void> {
+    if (!body.is_live && !body.ended_at) {
+      // No alert when user goes offline
+      return;
+    }
+
+    const [user_id, username, profile_picture, channel_slug, is_live] = [
+      body.broadcaster.user_id,
+      body.broadcaster.username,
+      body.broadcaster.profile_picture,
+      body.broadcaster.channel_slug,
+      body.is_live,
+    ];
+    const message = `Streamer ${username} | ${channel_slug}  is now LIVE. Title: "${body.title}"`;
+    console.log(message);
+
+    return message;
   }
 }

@@ -6,5 +6,5 @@ export class EventDto {
   name: EVENT_TYPE;
 
   @IsInt()
-  version: 1;
+  version: number;
 }

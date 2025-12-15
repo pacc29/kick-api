@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { EVENT_TYPE } from '../webhook/headers/event-type.header';
+import { EVENT_TYPE } from '../headers/event-type.header';
 
 @Injectable()
 export class WebhookHeaderGuard implements CanActivate {

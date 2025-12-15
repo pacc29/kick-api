@@ -1,5 +1,5 @@
 export enum EVENT_TYPE {
-  CHAT_MESSAGE_SENT = 'chat.message.sent',
+  // CHAT_MESSAGE_SENT = 'chat.message.sent',
   LIVESTREAM_STATUS_STREAM_UPDATED = 'livestream.status.updated',
   LIVESTREAM_STATUS_METADATA_UPDATED = 'livestream.metadata.updated',
 }

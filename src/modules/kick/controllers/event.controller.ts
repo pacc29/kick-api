@@ -1,15 +1,22 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { KickController } from '../kick.controller';
-import { KickService } from '../kick.service';
-import { GetSubscriptionsDto } from '../webhook/events/getSubscriptions.dto';
-import { SuscribeDto } from '../webhook/events/suscribe.dto';
+import { EVENT_TYPE } from '../events/headers/event-type.header';
+import { WebhookHeaderGuard } from '../events/guards/webhook-header.guard';
+import {
+  GetSubscriptionsDto,
+  SubscribeToEventDto,
+} from '../events/DTOs/subscriptions.dto';
 
 @Controller('kick/event')
 export class EventController extends KickController {
-  constructor(private readonly kickService: KickService) {
-    super();
-  }
-
   @Get()
   async getSubscriptions(@Query() getSubscriptionsDto: GetSubscriptionsDto) {
     const subscriptions =
@@ -19,12 +26,26 @@ export class EventController extends KickController {
   }
 
   @Post()
-  async suscribe(@Body() suscribeDto: SuscribeDto) {
-    const subscriptionId = await this.kickService.subscribe(suscribeDto);
+  async subscribeToEvent(@Body() subsCribeToEventDto: SubscribeToEventDto) {
+    const subscriptionId =
+      await this.kickService.subscribe(subsCribeToEventDto);
 
     return {
       message: 'Suscribed',
       subscription_id: subscriptionId,
     };
+  }
+
+  // Hacer un interceptor para el webhook que verifique el sender validation https://docs.kick.com/events/webhook-security
+  @UseGuards(WebhookHeaderGuard)
+  @Post('webhook')
+  async webhook(
+    @Headers('Kick-Event-Type') eventType: EVENT_TYPE,
+    @Headers('kick-event-subscription-id') subscriptionId: string,
+    @Body() body: any,
+  ) {
+    const response = await this.kickService.handleWebhook(eventType, body);
+
+    return { ok: 'ok' };
   }
 }
