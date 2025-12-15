@@ -12,6 +12,7 @@ import { EVENT_TYPE } from '../events/headers/event-type.header';
 import { WebhookHeaderGuard } from '../events/guards/webhook-header.guard';
 import {
   GetSubscriptionsDto,
+  SubscribeToEventBySlugDto,
   SubscribeToEventDto,
 } from '../events/DTOs/subscriptions.dto';
 
@@ -26,9 +27,9 @@ export class EventController extends KickController {
   }
 
   @Post()
-  async subscribeToEvent(@Body() subsCribeToEventDto: SubscribeToEventDto) {
+  async subscribeToEvent(@Body() subscribeToEventBySlugDto: SubscribeToEventBySlugDto) {
     const subscriptionId =
-      await this.kickService.subscribe(subsCribeToEventDto);
+      await this.kickService.subscribeToEvent(subscribeToEventBySlugDto);
 
     return {
       message: 'Suscribed',

@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { EVENT_TYPE } from './events/headers/event-type.header';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
@@ -14,9 +19,11 @@ import { EventBodyMap } from './events/maps/event.map';
 import { LiveStreamStatusUpdatedDto } from './events/payloads/livestream-status-updated.dto';
 import {
   GetSubscriptionsDto,
+  SubscribeToEventBySlugDto,
   SubscribeToEventDto,
 } from './events/DTOs/subscriptions.dto';
 import { ChannelInfoDto } from './channels/DTOs/channels.dto';
+import { EventDto } from './events/DTOs/subtypes/event.dto';
 
 @Injectable()
 export class KickService implements OnModuleInit {
@@ -50,9 +57,28 @@ export class KickService implements OnModuleInit {
     return data;
   }
 
-  async subscribe(
-    subscribeToEventDto: SubscribeToEventDto,
+  async subscribeToEvent(
+    subscribeToEventBySlugDto: SubscribeToEventBySlugDto,
   ): Promise<string | null> {
+    const channelInfo = await this.getChannelInfo({
+      slug: subscribeToEventBySlugDto.slug,
+    });
+
+    if (channelInfo === null || channelInfo.data.length === 0) {
+      throw new NotFoundException('Channel not found');
+    }
+
+    const broadcasterUserId = channelInfo.data[0].broadcaster_user_id;
+    const events: EventDto[] = subscribeToEventBySlugDto.events.map(
+      (eventType: EVENT_TYPE) => ({ name: eventType, version: 1 }),
+    );
+
+    const subscribeToEventDto: SubscribeToEventDto = {
+      broadcaster_user_id: broadcasterUserId,
+      events: events,
+      method: 'webhook',
+    };
+
     const response = await axios.post<SubscribeToEventResponse | ErrorResponse>(
       'https://api.kick.com/public/v1/events/subscriptions',
       subscribeToEventDto,
@@ -134,6 +160,7 @@ export class KickService implements OnModuleInit {
     }
   }
 
+  // ------ Webhook handles -------
   private async handleLiveStreamStatusUpdated(
     body: LiveStreamStatusUpdatedDto,
   ): Promise<string | void> {
@@ -151,4 +178,6 @@ export class KickService implements OnModuleInit {
 
     return message;
   }
+
+  private async handleLiveStreamMetadataUpdated() {}
 }
