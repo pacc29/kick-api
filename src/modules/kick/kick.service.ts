@@ -138,18 +138,15 @@ export class KickService implements OnModuleInit {
     body: LiveStreamStatusUpdatedDto,
   ): Promise<string | void> {
     if (!body.is_live && !body.ended_at) {
-      // No alert when user goes offline
-      return;
+      return; // No alert when user goes offline
     }
 
-    const [user_id, username, profile_picture, channel_slug, is_live] = [
-      body.broadcaster.user_id,
-      body.broadcaster.username,
-      body.broadcaster.profile_picture,
-      body.broadcaster.channel_slug,
-      body.is_live,
-    ];
-    const message = `Streamer ${username} | ${channel_slug}  is now LIVE. Title: "${body.title}"`;
+    const data = {
+      channel_slug: body.broadcaster.channel_slug,
+      title: body.title,
+    };
+
+    const message = `Streamer ${data.channel_slug} is now LIVE. Title: "${data.title}"`;
     console.log(message);
 
     return message;
