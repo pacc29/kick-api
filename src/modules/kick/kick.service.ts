@@ -1,16 +1,13 @@
 import {
-  BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
-  OnModuleInit,
 } from '@nestjs/common';
 import { EVENT_TYPE } from './events/headers/event-type.header';
 import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
 import qs from 'qs'; // Necesario para formatear el body
 import {
   AccessTokenResponse,
-  ErrorResponse,
   GetChannelInfoResponse,
   GetSubscriptionsResponse,
   SubscribeToEventResponse,
@@ -24,47 +21,54 @@ import {
 } from './events/DTOs/subscriptions.dto';
 import { ChannelInfoDto } from './channels/DTOs/channels.dto';
 import { EventDto } from './events/DTOs/subtypes/event.dto';
+import { Api } from 'src/common/helpers/api';
+
+export enum KICK_API_URLS {
+  TOKEN = 'https://id.kick.com/oauth/token',
+  CHANNELS = 'https://api.kick.com/public/v1/channels',
+  SUBSCRIPTIONS = 'https://api.kick.com/public/v1/events/subscriptions',
+}
 
 @Injectable()
-export class KickService implements OnModuleInit {
-  private accessToken: string | null = null;
+export class KickService {
+  // private accessToken: string | null = null;
 
   constructor(private readonly configService: ConfigService) {}
 
-  async onModuleInit() {
-    this.accessToken = await this.getAppAccessToken();
-  }
+  // async onModuleInit() {
+  //   this.accessToken = await this.getAppAccessToken();
+  // }
 
   public async getChannelInfo(
     channelInfoDto: ChannelInfoDto,
-  ): Promise<GetChannelInfoResponse | null> {
-    const response = await axios.get<GetChannelInfoResponse | ErrorResponse>(
-      `https://api.kick.com/public/v1/channels`,
+  ): Promise<GetChannelInfoResponse> {
+    const accessToken = await this.getAppAccessToken();
+
+    const response = await Api.Get<GetChannelInfoResponse>(
+      KICK_API_URLS.CHANNELS,
       {
-        headers: {
-          Authorization: `Bearer ${this.accessToken}`,
-        },
-        params: {
-          slug: channelInfoDto.slug,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { slug: channelInfoDto.slug },
       },
     );
 
-    if (!response.data?.data) return null;
+    if (!response.success) {
+      throw new NotFoundException('Channel not found');
+    }
 
-    const data = response.data;
-
-    return data;
+    return response.data;
   }
 
   async subscribeToEvent(
     subscribeToEventBySlugDto: SubscribeToEventBySlugDto,
-  ): Promise<string | null> {
+  ): Promise<string> {
+    const accessToken = await this.getAppAccessToken();
+
     const channelInfo = await this.getChannelInfo({
       slug: subscribeToEventBySlugDto.slug,
     });
 
-    if (channelInfo === null || channelInfo.data.length === 0) {
+    if (!channelInfo || !channelInfo.data.length) {
       throw new NotFoundException('Channel not found');
     }
 
@@ -79,18 +83,20 @@ export class KickService implements OnModuleInit {
       method: 'webhook',
     };
 
-    const response = await axios.post<SubscribeToEventResponse | ErrorResponse>(
-      'https://api.kick.com/public/v1/events/subscriptions',
-      subscribeToEventDto,
+    const response = await Api.Post<SubscribeToEventResponse>(
+      KICK_API_URLS.SUBSCRIPTIONS,
       {
         headers: {
-          Authorization: `Bearer ${this.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
+        data: subscribeToEventDto,
       },
     );
 
-    if (!response.data?.data) return null;
+    if (!response.success) {
+      throw new Error('Failed to subscribe to event');
+    }
 
     const [data] = response.data.data;
 
@@ -101,12 +107,14 @@ export class KickService implements OnModuleInit {
 
   async getSubscriptions(
     getSubscriptionsDto: GetSubscriptionsDto,
-  ): Promise<GetSubscriptionsResponse | null> {
-    const response = await axios.get<GetSubscriptionsResponse | ErrorResponse>(
-      'https://api.kick.com/public/v1/events/subscriptions',
+  ): Promise<GetSubscriptionsResponse> {
+    const accessToken = await this.getAppAccessToken();
+
+    const response = await Api.Get<GetSubscriptionsResponse>(
+      KICK_API_URLS.SUBSCRIPTIONS,
       {
         headers: {
-          Authorization: `Bearer ${this.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         params: {
           broadcaster_user_id: getSubscriptionsDto?.broadcaster_user_id,
@@ -114,20 +122,20 @@ export class KickService implements OnModuleInit {
       },
     );
 
-    if (!response.data?.data) return null;
+    if (!response.success) {
+      throw new Error('Failed to get subscriptions');
+    }
 
-    const data = response.data;
-
-    return data;
+    return response.data;
   }
 
-  private async getAppAccessToken(): Promise<string | null> {
+  private async getAppAccessToken(): Promise<string> {
     const clientId = this.configService.getOrThrow('CLIENT_ID');
     const clientSecret = this.configService.getOrThrow('CLIENT_SECRET');
     const grantType = this.configService.getOrThrow('GRANT_TYPE');
 
-    const response = await axios.post<AccessTokenResponse>(
-      'https://id.kick.com/oauth/token',
+    const response = await Api.Post<AccessTokenResponse>(
+      KICK_API_URLS.TOKEN,
       qs.stringify({
         client_id: clientId,
         client_secret: clientSecret,
@@ -140,13 +148,11 @@ export class KickService implements OnModuleInit {
       },
     );
 
-    const data = response.data;
-
-    if (!data) {
-      return null;
+    if (!response.success) {
+      throw new InternalServerErrorException('Failed to obtain access token');
     }
 
-    return data.access_token;
+    return response.data.access_token;
   }
 
   async handleWebhook(eventType: EVENT_TYPE, body: EventBodyMap[EVENT_TYPE]) {
@@ -165,7 +171,7 @@ export class KickService implements OnModuleInit {
     body: LiveStreamStatusUpdatedDto,
   ): Promise<string | void> {
     console.log('Live Stream Status Updated Event Body:', body);
-    
+
     if (!body.is_live) {
       return; // No alert when user goes offline
     }
