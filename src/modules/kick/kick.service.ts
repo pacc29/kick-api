@@ -85,12 +85,12 @@ export class KickService {
 
     const response = await Api.Post<SubscribeToEventResponse>(
       KICK_API_URLS.SUBSCRIPTIONS,
+      subscribeToEventDto,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        data: subscribeToEventDto,
       },
     );
 
