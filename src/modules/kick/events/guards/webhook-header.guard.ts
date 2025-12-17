@@ -56,6 +56,14 @@ export class WebhookHeaderGuard implements CanActivate {
     signature: string,
     rawBody: Buffer,
   ): boolean {
+    const messageIdStr = this.normalizeHeader(messageId);
+    const timestampStr = this.normalizeHeader(timestamp);
+    const signatureStr = this.normalizeHeader(signature);
+
+    if (!messageIdStr || !timestampStr || !signatureStr) {
+      return false;
+    }
+
     if (!messageId || !timestamp || !signature || !rawBody) {
       return false;
     }
@@ -77,6 +85,14 @@ export class WebhookHeaderGuard implements CanActivate {
     const publicKeyBytes = naclUtil.decodeBase64(publicKey);
 
     return nacl.sign.detached.verify(message, signatureBytes, publicKeyBytes);
+  }
+
+  private normalizeHeader(value: string | string[] | undefined): string | null {
+    if (!value) return null;
+
+    const v = Array.isArray(value) ? value[0] : value;
+
+    return v.replace(/\s+/g, '').trim();
   }
 
   private isValidEventType(eventType: string): boolean {
