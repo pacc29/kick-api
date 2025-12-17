@@ -14,6 +14,9 @@ async function bootstrap() {
     new FastifyAdapter({
       logger: false,
     }),
+    {
+      rawBody: true,
+    },
   );
 
   const config = new DocumentBuilder()
