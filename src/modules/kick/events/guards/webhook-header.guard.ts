@@ -7,8 +7,6 @@ import {
 import { Observable } from 'rxjs';
 import { EVENT_TYPE } from '../headers/event-type.header';
 import { FastifyRequest } from 'fastify';
-import nacl from 'tweetnacl';
-import * as naclUtil from 'tweetnacl-util';
 import { publicKey } from '../../public-key';
 import { ConfigService } from '@nestjs/config';
 import { createVerify } from 'crypto';
@@ -62,11 +60,15 @@ export class WebhookHeaderGuard implements CanActivate {
     signature: string,
     rawBody: Buffer,
   ): boolean {
+    if (!rawBody || !messageId || !signature || !timestamp) {
+      return false;
+    }
+
     const message = `${messageId}.${timestamp}.${rawBody.toString('utf8')}`;
 
     const pemKey = `-----BEGIN PUBLIC KEY-----\n${publicKey}\n-----END PUBLIC KEY-----`;
 
-    const verifier = createVerify('sha256'); // O el algoritmo que especifique Kick
+    const verifier = createVerify('sha256');
     verifier.update(message);
     verifier.end();
 
