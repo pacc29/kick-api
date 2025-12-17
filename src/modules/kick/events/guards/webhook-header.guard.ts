@@ -11,6 +11,7 @@ import nacl from 'tweetnacl';
 import * as naclUtil from 'tweetnacl-util';
 import { publicKey } from '../../public-key';
 import { ConfigService } from '@nestjs/config';
+import { createVerify } from 'crypto';
 
 @Injectable()
 export class WebhookHeaderGuard implements CanActivate {
@@ -32,7 +33,7 @@ export class WebhookHeaderGuard implements CanActivate {
     //   'kick-event-type': eventType,
     //   'kick-event-version': version,
     // } = request.headers;
-    
+
     const messageId = request.headers['kick-event-message-id'] as string;
     const signature = request.headers['kick-event-signature'] as string;
     const timestamp = request.headers['kick-event-message-timestamp'] as string;
@@ -61,28 +62,53 @@ export class WebhookHeaderGuard implements CanActivate {
     signature: string,
     rawBody: Buffer,
   ): boolean {
-    if (!messageId || !timestamp || !signature || !rawBody) {
+    try {
+      // 1. El mensaje sigue siendo el mismo formato
+      const message = `${messageId}.${timestamp}.${rawBody.toString('utf8')}`;
+
+      // 2. Preparar la llave pública en formato PEM (con los headers)
+      const pemKey = `-----BEGIN PUBLIC KEY-----\n${publicKey}\n-----END PUBLIC KEY-----`;
+
+      // 3. Verificar usando el módulo nativo 'crypto' (RSA-SHA256)
+      const verifier = createVerify('sha256'); // O el algoritmo que especifique Kick
+      verifier.update(message);
+      verifier.end();
+
+      return verifier.verify(pemKey, signature, 'base64');
+    } catch (error) {
+      console.error('Error en verificación RSA:', error);
       return false;
     }
-
-    const message = Buffer.concat([
-      Buffer.from(messageId),
-      Buffer.from('.'),
-      Buffer.from(timestamp),
-      Buffer.from('.'),
-      rawBody,
-    ]);
-
-    const signatureUint8 = naclUtil.decodeBase64(signature);
-    const publicKeyUint8 = naclUtil.decodeBase64(publicKey);
-    const messageUint8 = new Uint8Array(message);
-
-    return nacl.sign.detached.verify(
-      messageUint8,
-      signatureUint8,
-      publicKeyUint8,
-    );
   }
+
+  // private isValidSender(
+  //   messageId: string,
+  //   timestamp: string,
+  //   signature: string,
+  //   rawBody: Buffer,
+  // ): boolean {
+  //   if (!messageId || !timestamp || !signature || !rawBody) {
+  //     return false;
+  //   }
+
+  //   const message = Buffer.concat([
+  //     Buffer.from(messageId),
+  //     Buffer.from('.'),
+  //     Buffer.from(timestamp),
+  //     Buffer.from('.'),
+  //     rawBody,
+  //   ]);
+
+  //   const signatureUint8 = naclUtil.decodeBase64(signature);
+  //   const publicKeyUint8 = naclUtil.decodeBase64(publicKey);
+  //   const messageUint8 = new Uint8Array(message);
+
+  //   return nacl.sign.detached.verify(
+  //     messageUint8,
+  //     signatureUint8,
+  //     publicKeyUint8,
+  //   );
+  // }
 
   private isValidEventType(eventType: string): boolean {
     return (Object.values(EVENT_TYPE) as string[]).includes(eventType);
