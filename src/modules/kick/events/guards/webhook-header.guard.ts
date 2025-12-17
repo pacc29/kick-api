@@ -33,15 +33,15 @@ export class WebhookHeaderGuard implements CanActivate {
       'kick-event-version': version,
     } = request.headers;
 
-    const rawBody = (request as RawBodyRequest<FastifyRequest>).rawBody;
+    // const rawBody = (request as RawBodyRequest<FastifyRequest>).rawBody;
 
-    if (!rawBody) {
-      return false;
-    }
+    // if (!rawBody) {
+    //   return false;
+    // }
 
-    if (!this.isValidSender(messageId, timestamp, signature, rawBody)) {
-      return false;
-    }
+    // if (!this.isValidSender(messageId, timestamp, signature, rawBody)) {
+    //   return false;
+    // }
 
     if (!this.isValidEventType(eventType)) {
       return false;
