@@ -62,25 +62,22 @@ export class WebhookHeaderGuard implements CanActivate {
     signature: string,
     rawBody: Buffer,
   ): boolean {
-    try {
-      // 1. El mensaje sigue siendo el mismo formato
-      const message = `${messageId}.${timestamp}.${rawBody.toString('utf8')}`;
+    const message = `${messageId}.${timestamp}.${rawBody.toString('utf8')}`;
 
-      // 2. Preparar la llave pública en formato PEM (con los headers)
-      const pemKey = `-----BEGIN PUBLIC KEY-----\n${publicKey}\n-----END PUBLIC KEY-----`;
+    const pemKey = `-----BEGIN PUBLIC KEY-----\n${publicKey}\n-----END PUBLIC KEY-----`;
 
-      // 3. Verificar usando el módulo nativo 'crypto' (RSA-SHA256)
-      const verifier = createVerify('sha256'); // O el algoritmo que especifique Kick
-      verifier.update(message);
-      verifier.end();
+    const verifier = createVerify('sha256'); // O el algoritmo que especifique Kick
+    verifier.update(message);
+    verifier.end();
 
-      return verifier.verify(pemKey, signature, 'base64');
-    } catch (error) {
-      console.error('Error en verificación RSA:', error);
-      return false;
-    }
+    return verifier.verify(pemKey, signature, 'base64');
   }
 
+  private isValidEventType(eventType: string): boolean {
+    return (Object.values(EVENT_TYPE) as string[]).includes(eventType);
+  }
+
+  // Ed25519
   // private isValidSender(
   //   messageId: string,
   //   timestamp: string,
@@ -109,8 +106,4 @@ export class WebhookHeaderGuard implements CanActivate {
   //     publicKeyUint8,
   //   );
   // }
-
-  private isValidEventType(eventType: string): boolean {
-    return (Object.values(EVENT_TYPE) as string[]).includes(eventType);
-  }
 }
