@@ -39,17 +39,7 @@ export class WebhookHeaderGuard implements CanActivate {
       return false;
     }
 
-    const messageIdStr = this.normalizeHeader(messageId);
-    const timestampStr = this.normalizeHeader(timestamp);
-    const signatureStr = this.normalizeHeader(signature);
-
-    if (!messageIdStr || !timestampStr || !signatureStr) {
-      return false;
-    }
-
-    if (
-      !this.isValidSender(messageIdStr, timestampStr, signatureStr, rawBody)
-    ) {
+    if (!this.isValidSender(messageId, timestamp, signature, rawBody)) {
       return false;
     }
 
@@ -66,40 +56,27 @@ export class WebhookHeaderGuard implements CanActivate {
     signature: string,
     rawBody: Buffer,
   ): boolean {
+    if (!messageId || !timestamp || !signature || !rawBody) {
+      return false;
+    }
+
+    console.log(messageId);
+    console.log(timestamp);
+    console.log(signature);
+    console.log(rawBody.toString());
+
     const message = Buffer.concat([
       Buffer.from(messageId),
-      Buffer.from('.'),
+      // Buffer.from('.'),
       Buffer.from(timestamp),
-      Buffer.from('.'),
+      // Buffer.from('.'),
       rawBody,
     ]);
 
-    const signatureBytes = naclUtil.decodeBase64(
-      this.normalizeBase64(signature),
-    );
-
+    const signatureBytes = naclUtil.decodeBase64(signature);
     const publicKeyBytes = naclUtil.decodeBase64(publicKey);
 
     return nacl.sign.detached.verify(message, signatureBytes, publicKeyBytes);
-  }
-
-  private normalizeHeader(value: string | string[] | undefined): string | null {
-    if (!value) return null;
-
-    const v = Array.isArray(value) ? value[0] : value;
-
-    return v.replace(/\s+/g, '').trim();
-  }
-
-  private normalizeBase64(value: string): string {
-    let v = value.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
-
-    const pad = v.length % 4;
-    if (pad) {
-      v += '='.repeat(4 - pad);
-    }
-
-    return v;
   }
 
   private isValidEventType(eventType: string): boolean {
