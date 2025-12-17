@@ -24,24 +24,29 @@ export class WebhookHeaderGuard implements CanActivate {
 
     const request = context.switchToHttp().getRequest();
 
-    const {
-      'kick-event-message-id': messageId,
-      'kick-event-subscription-id': subscriptionId,
-      'kick-event-signature': signature,
-      'kick-event-message-timestamp': timestamp,
-      'kick-event-type': eventType,
-      'kick-event-version': version,
-    } = request.headers;
+    // const {
+    //   'kick-event-message-id': messageId,
+    //   'kick-event-subscription-id': subscriptionId,
+    //   'kick-event-signature': signature,
+    //   'kick-event-message-timestamp': timestamp,
+    //   'kick-event-type': eventType,
+    //   'kick-event-version': version,
+    // } = request.headers;
+    
+    const messageId = request.headers['kick-event-message-id'] as string;
+    const signature = request.headers['kick-event-signature'] as string;
+    const timestamp = request.headers['kick-event-message-timestamp'] as string;
+    const eventType = request.headers['kick-event-type'] as string;
 
-    // const rawBody = (request as RawBodyRequest<FastifyRequest>).rawBody;
+    const rawBody = (request as RawBodyRequest<FastifyRequest>).rawBody;
 
-    // if (!rawBody) {
-    //   return false;
-    // }
+    if (!rawBody) {
+      return false;
+    }
 
-    // if (!this.isValidSender(messageId, timestamp, signature, rawBody)) {
-    //   return false;
-    // }
+    if (!this.isValidSender(messageId, timestamp, signature, rawBody)) {
+      return false;
+    }
 
     if (!this.isValidEventType(eventType)) {
       return false;
@@ -60,23 +65,23 @@ export class WebhookHeaderGuard implements CanActivate {
       return false;
     }
 
-    console.log(messageId);
-    console.log(timestamp);
-    console.log(signature);
-    console.log(rawBody.toString());
-
     const message = Buffer.concat([
       Buffer.from(messageId),
-      // Buffer.from('.'),
+      Buffer.from('.'),
       Buffer.from(timestamp),
-      // Buffer.from('.'),
+      Buffer.from('.'),
       rawBody,
     ]);
 
-    const signatureBytes = naclUtil.decodeBase64(signature);
-    const publicKeyBytes = naclUtil.decodeBase64(publicKey);
+    const signatureUint8 = naclUtil.decodeBase64(signature);
+    const publicKeyUint8 = naclUtil.decodeBase64(publicKey);
+    const messageUint8 = new Uint8Array(message);
 
-    return nacl.sign.detached.verify(message, signatureBytes, publicKeyBytes);
+    return nacl.sign.detached.verify(
+      messageUint8,
+      signatureUint8,
+      publicKeyUint8,
+    );
   }
 
   private isValidEventType(eventType: string): boolean {
