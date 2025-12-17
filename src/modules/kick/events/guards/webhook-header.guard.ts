@@ -39,7 +39,17 @@ export class WebhookHeaderGuard implements CanActivate {
       return false;
     }
 
-    if (!this.isValidSender(messageId, timestamp, signature, rawBody)) {
+    const messageIdStr = this.normalizeHeader(messageId);
+    const timestampStr = this.normalizeHeader(timestamp);
+    const signatureStr = this.normalizeHeader(signature);
+
+    if (!messageIdStr || !timestampStr || !signatureStr) {
+      return false;
+    }
+
+    if (
+      !this.isValidSender(messageIdStr, timestampStr, signatureStr, rawBody)
+    ) {
       return false;
     }
 
