@@ -56,23 +56,6 @@ export class WebhookHeaderGuard implements CanActivate {
     signature: string,
     rawBody: Buffer,
   ): boolean {
-    const messageIdStr = this.normalizeHeader(messageId);
-    const timestampStr = this.normalizeHeader(timestamp);
-    const signatureStr = this.normalizeHeader(signature);
-
-    if (!messageIdStr || !timestampStr || !signatureStr) {
-      return false;
-    }
-
-    if (!messageId || !timestamp || !signature || !rawBody) {
-      return false;
-    }
-
-    console.log(messageId);
-    console.log(timestamp);
-    console.log(signature);
-    console.log(rawBody.toString());
-
     const message = Buffer.concat([
       Buffer.from(messageId),
       Buffer.from('.'),
@@ -81,7 +64,12 @@ export class WebhookHeaderGuard implements CanActivate {
       rawBody,
     ]);
 
-    const signatureBytes = naclUtil.decodeBase64(signature);
+    const normalizedSignature = signature
+      .replace(/\s+/g, '')
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    const signatureBytes = naclUtil.decodeBase64(normalizedSignature);
     const publicKeyBytes = naclUtil.decodeBase64(publicKey);
 
     return nacl.sign.detached.verify(message, signatureBytes, publicKeyBytes);
