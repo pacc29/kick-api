@@ -32,7 +32,7 @@ export class WebhookHeaderGuard implements CanActivate {
     //   'kick-event-type': eventType,
     //   'kick-event-version': version,
     // } = request.headers;
-    
+
     const messageId = request.headers['kick-event-message-id'] as string;
     const signature = request.headers['kick-event-signature'] as string;
     const timestamp = request.headers['kick-event-message-timestamp'] as string;
@@ -75,10 +75,10 @@ export class WebhookHeaderGuard implements CanActivate {
 
     const signatureUint8 = naclUtil.decodeBase64(signature);
     const publicKeyUint8 = naclUtil.decodeBase64(publicKey);
-    const messageUint8 = new Uint8Array(message);
+    // const messageUint8 = new Uint8Array(message);
 
     return nacl.sign.detached.verify(
-      messageUint8,
+      message,
       signatureUint8,
       publicKeyUint8,
     );
