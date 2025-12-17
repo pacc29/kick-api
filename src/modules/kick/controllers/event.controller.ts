@@ -36,7 +36,7 @@ export class EventController extends KickController {
     };
   }
 
-  // Hacer un interceptor para el webhook que verifique el sender validation https://docs.kick.com/events/webhook-security
+  // https://docs.kick.com/events/webhook-security
   @UseGuards(WebhookHeaderGuard)
   @Post('webhook')
   async webhook(
