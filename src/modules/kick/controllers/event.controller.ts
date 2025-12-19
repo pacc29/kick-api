@@ -26,9 +26,12 @@ export class EventController extends KickController {
   }
 
   @Post()
-  async subscribeToEvent(@Body() subscribeToEventBySlugDto: SubscribeToEventBySlugDto) {
-    const subscriptionId =
-      await this.kickService.subscribeToEvent(subscribeToEventBySlugDto);
+  async subscribeToEvent(
+    @Body() subscribeToEventBySlugDto: SubscribeToEventBySlugDto,
+  ) {
+    const subscriptionId = await this.kickService.subscribeToEvent(
+      subscribeToEventBySlugDto,
+    );
 
     return {
       message: 'Suscribed',

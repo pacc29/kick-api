@@ -9,6 +9,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './common/interfaces/environment.interface';
+import { Token } from './modules/kick/entities/token.entity';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { EnvironmentVariables } from './common/interfaces/environment.interface'
         username: configService.getOrThrow('DB_USER'),
         password: configService.getOrThrow('DB_PASSWORD'),
         database: configService.getOrThrow('DB_NAME'),
-        // entities: [User, Subscription],
+        entities: [Token],
         autoLoadEntities: true,
         synchronize: configService.getOrThrow('NODE_ENV') === 'development',
       }),

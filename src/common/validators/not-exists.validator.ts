@@ -6,7 +6,7 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { DataSource } from 'typeorm';
-import { state } from '../enums/state.enum';
+import { State } from '../enums/state.enum';
 
 @ValidatorConstraint({ async: true })
 export class NotExistsConstraint implements ValidatorConstraintInterface {
@@ -37,7 +37,7 @@ export class NotExistsConstraint implements ValidatorConstraintInterface {
 export function NotExists(
   entity: Function, // Entity (ex. User)
   column: string, // Column (ex. 'email')
-  notLikeState: state | null = state.STATE_DISABLED, // send null to exclude this condition
+  notLikeState: State | null = State.STATE_DISABLED, // send null to exclude this condition
   validationOptions?: ValidationOptions,
 ) {
   return function (object: Object, propertyName: string) {

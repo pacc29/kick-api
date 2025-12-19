@@ -22,6 +22,10 @@ import {
 import { ChannelInfoDto } from './channels/DTOs/channels.dto';
 import { EventDto } from './events/DTOs/subtypes/event.dto';
 import { Api } from 'src/common/helpers/api';
+import { InjectRepository } from '@nestjs/typeorm';
+import { LessThan, MoreThan, Repository } from 'typeorm';
+import { Token } from './entities/token.entity';
+import { State } from 'src/common/enums/state.enum';
 
 export enum KICK_API_URLS {
   TOKEN = 'https://id.kick.com/oauth/token',
@@ -31,13 +35,10 @@ export enum KICK_API_URLS {
 
 @Injectable()
 export class KickService {
-  // private accessToken: string | null = null;
-
-  constructor(private readonly configService: ConfigService) {}
-
-  // async onModuleInit() {
-  //   this.accessToken = await this.getAppAccessToken();
-  // }
+  constructor(
+    @InjectRepository(Token) private tokensRepository: Repository<Token>,
+    private readonly configService: ConfigService,
+  ) {}
 
   public async getChannelInfo(
     channelInfoDto: ChannelInfoDto,
@@ -130,6 +131,20 @@ export class KickService {
   }
 
   private async getAppAccessToken(): Promise<string> {
+    await this.disableExpiredTokens();
+
+    const result = await this.tokensRepository
+      .createQueryBuilder('tokens')
+      .select('tokens.token')
+      .where('tokens.state = :state', { state: State.STATE_ENABLED })
+      .andWhere('tokens.expiration_date > :now', { now: new Date() })
+      .orderBy('tokens.created_at', 'DESC')
+      .getOne();
+
+    if (result?.token) {
+      return result.token;
+    }
+
     const clientId = this.configService.getOrThrow('CLIENT_ID');
     const clientSecret = this.configService.getOrThrow('CLIENT_SECRET');
     const grantType = this.configService.getOrThrow('GRANT_TYPE');
@@ -152,7 +167,30 @@ export class KickService {
       throw new InternalServerErrorException('Failed to obtain access token');
     }
 
-    return response.data.access_token;
+    const newAccessToken = response.data.access_token;
+    const expirationDate = new Date(
+      Date.now() + response.data.expires_in * 1000,
+    );
+
+    const tokenEntity = this.tokensRepository.create({
+      token: newAccessToken,
+      expiration_date: expirationDate,
+    });
+    await this.tokensRepository.save(tokenEntity);
+
+    return newAccessToken;
+  }
+
+  private async disableExpiredTokens(): Promise<void> {
+    await this.tokensRepository.update(
+      {
+        state: State.STATE_ENABLED,
+        expiration_date: LessThan(new Date()),
+      },
+      {
+        state: State.STATE_DISABLED,
+      },
+    );
   }
 
   async handleWebhook(eventType: EVENT_TYPE, body: EventBodyMap[EVENT_TYPE]) {
