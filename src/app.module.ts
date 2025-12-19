@@ -27,7 +27,8 @@ import { Token } from './modules/kick/entities/token.entity';
         database: configService.getOrThrow('DB_NAME'),
         entities: [Token],
         autoLoadEntities: true,
-        synchronize: configService.getOrThrow('NODE_ENV') === 'development',
+        // synchronize: configService.getOrThrow('NODE_ENV') === 'development',
+        synchronize: true
       }),
     }),
     KickModule,
